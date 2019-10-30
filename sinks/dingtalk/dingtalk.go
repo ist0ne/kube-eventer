@@ -80,6 +80,7 @@ type DingTalkSink struct {
 	Endpoint   string
 	Namespaces []string
 	Kinds      []string
+        ExReasons  []string
 	Token      string
 	Level      int
 	Labels     []string
@@ -140,6 +141,19 @@ func (d *DingTalkSink) Ding(event *v1.Event) {
 			return
 		}
 	}
+
+        if d.ExReasons != nil {
+                skip := false
+                for _, reason := range d.ExReasons {
+                        if reason == event.Reason {
+                                skip = true
+                                break
+                        }
+                }
+                if skip {
+                        return
+                }
+        }
 
 	msg := createMsgFromEvent(d, event)
 	if msg == nil {
@@ -287,6 +301,7 @@ func NewDingTalkSink(uri *url.URL) (*DingTalkSink, error) {
 	// kinds:https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
 	// such as node,pod,component and so on
 	d.Kinds = getValues(opts["kinds"])
+        d.ExReasons = getValues(opts["exreasons"])
 
 	return d, nil
 }
